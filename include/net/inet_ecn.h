@@ -62,6 +62,14 @@ static inline void INET_ECN_dontxmit(struct sock *sk)
 		inet6_sk(sk)->tclass &= ~INET_ECN_MASK;
 }
 
+static inline void INET_CE_xmit(struct sock *sk)
+{
+	inet_sk(sk)->tos |= INET_ECN_CE;
+    if (inet6_sk(sk) != NULL)
+        inet6_sk(sk)->tclass |= INET_ECN_CE;
+
+}
+
 #define IP6_ECN_flow_init(label) do {		\
       (label) &= ~htonl(INET_ECN_MASK << 20);	\
     } while (0)

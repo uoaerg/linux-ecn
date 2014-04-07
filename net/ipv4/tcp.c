@@ -371,6 +371,7 @@ static int retrans_to_secs(u8 retrans, int timeout, int rto_max)
 	return period;
 }
 
+
 /* Address-family independent initialization for a tcp_sock.
  *
  * NOTE: A lot of things set to zero explicitly by call to
@@ -423,6 +424,10 @@ void tcp_init_sock(struct sock *sk)
 	sock_update_memcg(sk);
 	sk_sockets_allocated_inc(sk);
 	local_bh_enable();
+
+    tp->ce_probes_sent = 0;
+    tp->path_probing_seq = 0;
+    tp->path_probing_wait = 0;
 }
 EXPORT_SYMBOL(tcp_init_sock);
 

@@ -255,10 +255,25 @@ static inline void TCP_ECN_rcv_syn(struct tcp_sock *tp, const struct tcphdr *th)
 		tp->ecn_flags &= ~TCP_ECN_OK;
 }
 
-static bool TCP_ECN_rcv_ecn_echo(const struct tcp_sock *tp, const struct tcphdr *th)
+static bool TCP_ECN_rcv_ecn_echo(struct tcp_sock *tp, const struct tcphdr *th)
 {
-	if (th->ece && !th->syn && (tp->ecn_flags & TCP_ECN_OK))
-		return true;
+	if (th->ece && !th->syn) {
+        /* path is working? */
+        if (tp->ecn_flags & TCP_ECN_PATH_OK) {
+            if (th->ack_seq <= (tp->path_probing_seq + 1)) /* ignore this one */
+                return false;
+            else /* not in path probing anymore */
+                return true;
+        }
+        /* path not yet ok */
+        else {
+            if (tp->ce_probes_sent) {
+                /* path is ECN capable */
+                tp->ecn_flags |= TCP_ECN_PATH_OK;
+                printk("ECN path set to \"OK\"");
+            }
+        }
+    }
 	return false;
 }
 
@@ -788,12 +803,13 @@ static void tcp_set_rto(struct sock *sk)
 	tcp_bound_rto(sk);
 }
 
-__u32 tcp_init_cwnd(const struct tcp_sock *tp, const struct dst_entry *dst)
+__u32 tcp_init_cwnd(struct tcp_sock *tp, const struct dst_entry *dst)
 {
 	__u32 cwnd = (dst ? dst_metric(dst, RTAX_INITCWND) : 0);
 
 	if (!cwnd)
 		cwnd = TCP_INIT_CWND;
+    tp->initcwnd = cwnd;
 	return min_t(__u32, cwnd, tp->snd_cwnd_clamp);
 }
 

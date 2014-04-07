@@ -62,6 +62,8 @@ int sysctl_tcp_tso_win_divisor __read_mostly = 3;
 int sysctl_tcp_mtu_probing __read_mostly = 0;
 int sysctl_tcp_base_mss __read_mostly = TCP_BASE_MSS;
 
+int sysctl_tcp_ecn_path_probing __read_mostly = 0;
+
 /* By default, RFC2861 behavior.  */
 int sysctl_tcp_slow_start_after_idle __read_mostly = 1;
 
@@ -356,7 +358,35 @@ static inline void TCP_ECN_send(struct sock *sk, struct sk_buff *skb,
 		/* Not-retransmitted data segment: set ECT and inject CWR. */
 		if (skb->len != tcp_header_len &&
 		    !before(TCP_SKB_CB(skb)->seq, tp->snd_nxt)) {
-			INET_ECN_xmit(sk);
+            if (sysctl_tcp_ecn_path_probing == 0) {
+                /* default with path probing switched off */
+                INET_ECN_xmit(sk);
+            } else if (tp->path_probing_wait < tp->initcwnd) {
+                /* wait before path probing */
+                tp->path_probing_wait++;
+                INET_ECN_dontxmit(sk);
+                printk("PATH_PROBING: waiting for ECN path probe (packet %d, CWND is %d)\n", tp->path_probing_wait, tp->initcwnd);
+            } else {
+                /* ECN path probing */
+                if (tp->ce_probes_sent < 3) {
+                    INET_CE_xmit(sk);
+                    tp->ce_probes_sent++;
+                    /* store seq for latest probe */
+                    const struct tcphdr *th = tcp_hdr(skb);
+                    tp->path_probing_seq = th->seq;
+                    printk("PATH_PROBING: sent ECN path probe %d\n", tp->ce_probes_sent);
+                } else if (tp->ce_probes_sent == 3) {
+                    INET_ECN_dontxmit(sk);
+                    tp->ce_probes_sent++;
+                    printk("PATH_PROBING: sent packet without ECT\n");
+                } else if (tp->ecn_flags & TCP_ECN_PATH_OK) {
+                    /* probes were sent and we got ECN echos (path ok) */
+                    INET_ECN_xmit(sk);
+                } else {
+                    /* probes sent, but not confirmed yet --> don't use ECN yet */
+                    INET_ECN_dontxmit(sk);
+                }
+            }
 			if (tp->ecn_flags & TCP_ECN_QUEUE_CWR) {
 				tp->ecn_flags &= ~TCP_ECN_QUEUE_CWR;
 				tcp_hdr(skb)->cwr = 1;

@@ -382,6 +382,7 @@ static const struct bin_table bin_net_ipv4_table[] = {
 	{ CTL_INT,	NET_TCP_TW_REUSE,			"tcp_tw_reuse" },
 	{ CTL_INT,	NET_TCP_FRTO,				"tcp_frto" },
 	{ CTL_INT,	NET_TCP_FRTO_RESPONSE,			"tcp_frto_response" },
+    { CTL_INT,  NET_TCP_ECN_PATH_PROBING,       "tcp_ecn_path_probing" },
 	{ CTL_INT,	NET_TCP_LOW_LATENCY,			"tcp_low_latency" },
 	{ CTL_INT,	NET_TCP_NO_METRICS_SAVE,		"tcp_no_metrics_save" },
 	{ CTL_INT,	NET_TCP_MODERATE_RCVBUF,		"tcp_moderate_rcvbuf" },

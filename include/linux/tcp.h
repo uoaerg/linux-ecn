@@ -323,6 +323,12 @@ struct tcp_sock {
 	 * socket. Used to retransmit SYNACKs etc.
 	 */
 	struct request_sock *fastopen_rsk;
+
+    int ce_probes_sent;
+    int path_probing_seq;
+    int path_probing_wait;
+    int ecn_path_probing;
+    int initcwnd;
 };
 
 enum tsq_flags {
