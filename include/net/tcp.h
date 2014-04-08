@@ -951,7 +951,7 @@ static inline __u32 tcp_current_ssthresh(const struct sock *sk)
 #define tcp_verify_left_out(tp)	WARN_ON(tcp_left_out(tp) > tp->packets_out)
 
 void tcp_enter_cwr(struct sock *sk, const int set_ssthresh);
-__u32 tcp_init_cwnd(const struct tcp_sock *tp, const struct dst_entry *dst);
+__u32 tcp_init_cwnd(struct tcp_sock *tp, const struct dst_entry *dst);
 
 /* The maximum number of MSS of available cwnd for which TSO defers
  * sending if not using sysctl_tcp_tso_win_divisor.
